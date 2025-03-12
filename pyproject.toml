@@ -7,7 +7,9 @@ authors = [
     { name = "TerminalMan", email = "84923604+SecretiveShell@users.noreply.github.com" }
 ]
 requires-python = ">=3.13"
-dependencies = []
+dependencies = [
+    "pydantic>=2.10.6",
+]
 
 [project.scripts]
 easymcp = "easymcp:main"
