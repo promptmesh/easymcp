@@ -1,4 +1,5 @@
 from asyncio import Queue, Task
+from typing import Awaitable
 
 from easymcp.client.iobuffers import reader, writer
 from easymcp.client.transports.generic import GenericTransport
@@ -13,6 +14,9 @@ class ClientSession:
     reader_task: Task[None]
     writer_task: Task[None]
 
+    roots_callback: Awaitable | None = None
+    sampling_callback: Awaitable | None = None
+
     def __init__(self, transport: GenericTransport):
         self.transport = transport
 
@@ -23,6 +27,14 @@ class ClientSession:
     async def init(self):
         """initialize the client session"""
         await self.transport.init()
+
+    async def register_roots_callback(self, callback: Awaitable):
+        """register a callback for roots"""
+        self.roots_callback = callback
+
+    async def register_sampling_callback(self, callback: Awaitable):
+        """register a callback for sampling"""
+        self.sampling_callback = callback
 
     async def start(self):
         """start the client session"""
