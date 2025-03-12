@@ -1,10 +1,12 @@
-
-
+from typing import Awaitable
 from easymcp.client.ClientSession import ClientSession
 
 
 class ClientManager:
     """ClientManager class"""
+
+    default_list_roots_callback: Awaitable | None = None
+    default_list_sampling_callback: Awaitable | None = None
 
     sessions: list[ClientSession]
 
@@ -46,3 +48,16 @@ class ClientManager:
     async def read_prompt(self, name: str, args: dict):
         """read a prompt"""
         raise NotImplementedError
+    
+    # callbacks
+    async def register_roots_callback(self, callback: Awaitable):
+        """register a callback for roots"""
+        self.default_list_roots_callback = callback
+        for session in self.sessions:
+            await session.register_roots_callback(callback)
+
+    async def register_sampling_callback(self, callback: Awaitable):
+        """register a callback for sampling"""
+        self.default_list_sampling_callback = callback
+        for session in self.sessions:
+            await session.register_sampling_callback(callback)
