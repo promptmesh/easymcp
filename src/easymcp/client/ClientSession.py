@@ -4,12 +4,13 @@ from typing import Awaitable
 from easymcp.client.iobuffers import reader, writer
 from easymcp.client.transports.generic import GenericTransport
 
+from easymcp.vendored import types
 
 class ClientSession:
     """ClientSession class"""
 
-    incoming_messages: Queue
-    outgoing_messages: Queue
+    incoming_messages: Queue[types.JSONRPCMessage]
+    outgoing_messages: Queue[types.JSONRPCMessage]
 
     reader_task: Task[None]
     writer_task: Task[None]
@@ -36,11 +37,16 @@ class ClientSession:
         """register a callback for sampling"""
         self.sampling_callback = callback
 
-    async def start(self):
+    async def start(self) -> types.InitializeResult:
         """start the client session"""
         await self.transport.start()
         self.reader_task = await reader(self.transport, self.incoming_messages)
         self.writer_task = await writer(self.transport, self.outgoing_messages)
+
+        sampling = (types.SamplingCapability() if self.sampling_callback is not None else None)
+        roots = (types.RootsCapability(listChanged=True) if self.roots_callback is not None else None)
+
+        return types.InitializeResult.model_construct()
 
     async def stop(self):
         """stop the client session"""

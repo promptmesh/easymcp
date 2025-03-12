@@ -1,7 +1,6 @@
 import asyncio
 import os
 import shutil
-import signal
 import sys
 
 from pydantic import BaseModel
