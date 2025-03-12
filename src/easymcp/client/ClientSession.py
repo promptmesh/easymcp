@@ -39,8 +39,8 @@ class ClientSession:
     async def start(self):
         """start the client session"""
         await self.transport.start()
-        reader_task = await reader(self.transport, self.incoming_messages)
-        writer_task = await writer(self.transport, self.outgoing_messages)
+        self.reader_task = await reader(self.transport, self.incoming_messages)
+        self.writer_task = await writer(self.transport, self.outgoing_messages)
 
     async def stop(self):
         """stop the client session"""
