@@ -1,5 +1,6 @@
 from asyncio import Queue, Task
 
+from loguru import logger
 import pydantic
 from easymcp.client.transports.generic import GenericTransport
 from easymcp.vendored import types
@@ -14,6 +15,10 @@ async def reader(transport: GenericTransport, queue: Queue[types.JSONRPCMessage]
             try:
                 parsed = types.JSONRPCMessage.model_validate_json(data)
             except pydantic.ValidationError:
+                logger.error(f"Error parsing JSON: {data}")
+                parsed = None
+
+            if parsed is None:
                 continue
 
             queue.put_nowait(parsed)

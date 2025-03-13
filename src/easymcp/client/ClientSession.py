@@ -84,6 +84,7 @@ class ClientSession:
             else None
         )
 
+        # send initialize request
         request = types.ClientRequest(
             types.InitializeRequest(
                 method="initialize",
@@ -99,7 +100,21 @@ class ClientSession:
             )
         )
 
-        return await self.request_map.send_request(CreateJsonRPCRequest(request))  # type: ignore
+        response = await self.request_map.send_request(CreateJsonRPCRequest(request))  # type: ignore
+
+        # send initialized notification
+        notification = types.ClientNotification(
+            types.InitializedNotification(method="notifications/initialized")
+        )
+
+        self.outgoing_messages.put_nowait(
+            types.JSONRPCNotification(
+                jsonrpc="2.0",
+                **notification.model_dump(by_alias=True, mode="json", exclude_none=True),
+            )
+        )  # type: ignore
+
+        return response
 
     async def stop(self):
         """stop the client session"""

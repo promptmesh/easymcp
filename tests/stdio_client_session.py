@@ -3,7 +3,7 @@ from easymcp.client.ClientSession import ClientSession
 from easymcp.client.transports.stdio import StdioTransport, StdioServerParameters
 
 async def main():
-    args = StdioServerParameters(command="powershell", args=["-c", "uvx mcp-timeserver"])# | tee.exe log.jsonl"])
+    args = StdioServerParameters(command="uvx", args=["mcp-timeserver"])# | tee.exe log.jsonl"])
     transport = StdioTransport(args)
     
     client_session = ClientSession(transport)
@@ -11,6 +11,8 @@ async def main():
     
     result = await client_session.start()
     print(f"{result=}")
+
+    await asyncio.sleep(10)
 
     resources = await client_session.list_resources()
     print(f"{resources=}")
