@@ -6,7 +6,7 @@ async def main():
     transport = StdioTransport(args)
     await transport.init()
     await transport.start()
-    print(await transport.receive())
+    print(f"{await transport.receive()=}")
     await transport.stop()
 
 if __name__ == "__main__":

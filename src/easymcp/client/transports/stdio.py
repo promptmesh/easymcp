@@ -3,6 +3,7 @@ import os
 import shutil
 import sys
 
+from loguru import logger
 from pydantic import BaseModel
 
 from easymcp.client.transports.generic import GenericTransport
@@ -72,7 +73,9 @@ class StdioTransport(GenericTransport):
         """Send data to the transport"""
         assert self.subprocess.stdin is not None, "subprocess stdin is not open"
 
-        self.subprocess.stdin.write(message.encode())
+        logger.debug(f"Sending message: {message}")
+
+        self.subprocess.stdin.write(message.strip().encode())
         self.subprocess.stdin.write(b"\n")
         await self.subprocess.stdin.drain()
 
@@ -80,7 +83,11 @@ class StdioTransport(GenericTransport):
         """Receive data from the transport"""
         assert self.subprocess.stdout is not None, "subprocess stdout is not open"
 
-        return (await self.subprocess.stdout.readline()).decode()
+        message = (await self.subprocess.stdout.readline()).decode()
+
+        logger.debug(f"Received message: {message}")
+
+        return message
 
     async def read_stderr(self):
         """Read stderr from the subprocess and print to host stderr"""

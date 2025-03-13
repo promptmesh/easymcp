@@ -8,6 +8,7 @@ from easymcp.client.transports.generic import GenericTransport
 from easymcp.client.utils import CreateJsonRPCRequest
 from easymcp.vendored import types
 
+
 class ClientSession:
     """ClientSession class"""
 
@@ -59,7 +60,7 @@ class ClientSession:
                     pass
 
                 elif isinstance(message.root, types.JSONRPCError):
-                    pass
+                    raise ValueError(f"Received error: {message.root}")
 
                 else:
                     raise ValueError(f"Unknown message type: {message.root}")
@@ -72,7 +73,7 @@ class ClientSession:
         self.reader_task = await reader(self.transport, self.incoming_messages)
         self.writer_task = await writer(self.transport, self.outgoing_messages)
 
-        self.start_reading_messages()        
+        self.start_reading_messages()
 
         sampling = (
             types.SamplingCapability() if self.sampling_callback is not None else None
@@ -98,8 +99,7 @@ class ClientSession:
             )
         )
 
-        return await self.request_map.send_request(CreateJsonRPCRequest(request)) # type: ignore
-        
+        return await self.request_map.send_request(CreateJsonRPCRequest(request))  # type: ignore
 
     async def stop(self):
         """stop the client session"""
@@ -107,7 +107,15 @@ class ClientSession:
 
     async def list_tools(self):
         """list available tools"""
-        raise NotImplementedError
+        request = types.ClientRequest(
+            types.ListToolsRequest(
+                method="tools/list",
+            )
+        )
+
+        response = self.request_map.send_request(CreateJsonRPCRequest(request))
+
+        return await response
 
     async def call_tool(self, tool_name: str, args: dict):
         """call a tool"""
@@ -115,7 +123,16 @@ class ClientSession:
 
     async def list_resources(self):
         """list available resources"""
-        raise NotImplementedError
+
+        request = types.ClientRequest(
+            types.ListResourcesRequest(
+                method="resources/list",
+            )
+        )
+
+        response = self.request_map.send_request(CreateJsonRPCRequest(request))
+
+        return await response
 
     async def read_resource(self, resource_name: str):
         """read a resource"""

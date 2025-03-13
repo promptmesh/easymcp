@@ -2,6 +2,8 @@ from asyncio import Future, Queue
 
 import easymcp.vendored.types as types
 
+from loguru import logger
+
 class RequestMap:
     """RequestMap class"""
 
@@ -15,6 +17,8 @@ class RequestMap:
 
     def send_request(self, message: types.JSONRPCRequest):
         """send a request"""
+        
+        logger.debug(f"Sending request: {message}")
 
         future = Future[types.JSONRPCResponse]()
 
@@ -26,8 +30,10 @@ class RequestMap:
     
     def resolve_request(self, message: types.JSONRPCResponse):
         """resolve a request"""
+
+        logger.debug(f"Resolving request: {message}")
+
         request_id = message.id
-        print(self.requests)
         future = self.requests.pop(str(request_id), None)
         if future is not None:
             future.set_result(message)
