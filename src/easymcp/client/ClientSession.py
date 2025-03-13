@@ -2,6 +2,7 @@ from asyncio import Queue, Task
 import json
 from typing import Awaitable
 
+from httpx import request
 from loguru import logger
 
 from easymcp.client.iobuffers import reader, writer
@@ -142,7 +143,20 @@ class ClientSession:
 
     async def call_tool(self, tool_name: str, args: dict):
         """call a tool"""
-        raise NotImplementedError
+        request = types.ClientRequest(
+            types.CallToolRequest(
+                method="tools/call",
+                params=types.CallToolRequestParams(
+                    name=tool_name,
+                    arguments=args,
+                ),
+            )
+        )
+
+        response = await self.request_map.send_request(CreateJsonRPCRequest(request))
+        result = types.CallToolResult.model_validate(response.result)
+
+        return result
 
     async def list_resources(self):
         """list available resources"""
@@ -160,5 +174,19 @@ class ClientSession:
 
     async def read_resource(self, resource_name: str):
         """read a resource"""
-        raise NotImplementedError
+        
+        request = types.ClientRequest(
+            types.ReadResourceRequest(
+                method="resources/read",
+                params=types.ReadResourceRequestParams(
+                    # TODO: validate uri 
+                    uri=resource_name, # type: ignore
+                ),
+            )
+        )
+
+        response = await self.request_map.send_request(CreateJsonRPCRequest(request))
+        result = types.ReadResourceResult.model_validate(response.result)
+
+        return result
 
