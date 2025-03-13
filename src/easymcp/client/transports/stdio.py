@@ -1,4 +1,5 @@
 import asyncio
+import io
 import os
 import shutil
 import sys
@@ -10,7 +11,7 @@ from easymcp.client.transports.generic import GenericTransport
 
 
 class StdioServerParameters(BaseModel):
-    """StdioServerParameters class"""
+    """Configuration for StdioTransport."""
 
     command: str
     """command to run"""
@@ -25,11 +26,34 @@ class StdioServerParameters(BaseModel):
     """current working directory"""
 
     log_stderr: bool = True
-    """log stderr to host stderr"""
+
+
+class ReadBuffer:
+    """Buffered reader using BytesIO to handle chunked stdio input."""
+
+    def __init__(self):
+        self.buffer = io.BytesIO()
+
+    def append(self, data: bytes):
+        """Append new data to the buffer."""
+        self.buffer.seek(0, io.SEEK_END)  # Move to the end before writing
+        self.buffer.write(data)
+
+    def read_message(self) -> str | None:
+        """Extracts the next full message (newline-delimited)."""
+        self.buffer.seek(0)  # Move to the start
+        data = self.buffer.getvalue()
+
+        if b"\n" in data:
+            message, rest = data.split(b"\n", 1)  # Extract first message
+            self.buffer = io.BytesIO(rest)  # Keep remaining data
+            return message.decode().strip()
+
+        return None
 
 
 class StdioTransport(GenericTransport):
-    """StdioTransport class"""
+    """Asynchronous stdio-based transport."""
 
     arguments: StdioServerParameters
 
@@ -37,9 +61,11 @@ class StdioTransport(GenericTransport):
         super().__init__(arguments)
         self.state = "constructed"
         self.arguments = arguments.model_copy(deep=True)
+        self.read_buffer = ReadBuffer()
 
     async def init(self):
-        """Perform init logic"""
+        """Perform initialization."""
+        
         self.state = "initialized"
 
         # Resolve command
@@ -53,7 +79,7 @@ class StdioTransport(GenericTransport):
         self.arguments.env = env
 
     async def start(self):
-        """Start the transport"""
+        """Start the transport process."""
         self.state = "started"
 
         self.subprocess = await asyncio.create_subprocess_exec(
@@ -70,27 +96,33 @@ class StdioTransport(GenericTransport):
             self.stderr_task = asyncio.create_task(self.read_stderr())
 
     async def send(self, message: str):
-        """Send data to the transport"""
+        """Send a newline-delimited JSON message."""
         assert self.subprocess.stdin is not None, "subprocess stdin is not open"
 
-        logger.debug(f"Sending message: {message}")
+        formatted_message = message.strip() + "\n"  # Ensure newline
+        logger.debug(f"Sending message: {formatted_message}")
 
-        self.subprocess.stdin.write(message.strip().encode())
-        self.subprocess.stdin.write(b"\n")
+        self.subprocess.stdin.write(formatted_message.encode())
         await self.subprocess.stdin.drain()
 
     async def receive(self):
-        """Receive data from the transport"""
+        """Receive a full message using buffered reading."""
         assert self.subprocess.stdout is not None, "subprocess stdout is not open"
 
-        message = (await self.subprocess.stdout.readline()).decode()
+        while True:
+            chunk = await self.subprocess.stdout.read(1024)
+            if not chunk:
+                break  # EOF or process closed
 
-        logger.debug(f"Received message: {message}")
+            self.read_buffer.append(chunk)
 
-        return message
+            message = self.read_buffer.read_message()
+            if message:
+                logger.debug(f"Received message: {message}")
+                return message  # Return complete message
 
     async def read_stderr(self):
-        """Read stderr from the subprocess and print to host stderr"""
+        """Continuously read and print stderr."""
         if self.subprocess.stderr is None:
             return
 
@@ -98,16 +130,25 @@ class StdioTransport(GenericTransport):
             print(line.decode(), file=sys.stderr, end="")
 
     async def stop(self):
-        """Stop the transport"""
-        self.state = "stopped"
+        """Stop the transport gracefully."""
+        if self.state == "stopped":
+            return
+
+        self.state = "stopping"
+        self.read_buffer = ReadBuffer()  # Clear buffer
+
         try:
-            self.subprocess.terminate()
+            if self.subprocess:
+                self.subprocess.terminate()
+                try:
+                    await asyncio.wait_for(self.subprocess.wait(), timeout=5)
+                except asyncio.TimeoutError:
+                    self.subprocess.kill()
+                    await self.subprocess.wait()
 
-            try:
-                await asyncio.wait_for(self.subprocess.wait(), timeout=5)
-            except asyncio.TimeoutError:
-                self.subprocess.kill()
-        
-        except RuntimeError:
-            pass
-
+            logger.info("Transport stopped successfully.")
+        except Exception as e:
+            logger.error(f"Error stopping transport: {e}")
+        finally:
+            self.subprocess = None
+            self.state = "stopped"

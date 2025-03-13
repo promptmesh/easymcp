@@ -12,7 +12,7 @@ async def main():
     result = await client_session.start()
     print(f"{result=}")
 
-    await asyncio.sleep(10)
+    # await asyncio.sleep(10)
 
     resources = await client_session.list_resources()
     print(f"{resources=}")
