@@ -1,5 +1,8 @@
 from asyncio import Queue, Task
+import json
 from typing import Awaitable
+
+from loguru import logger
 
 from easymcp.client.iobuffers import reader, writer
 from easymcp.client.requestmap import RequestMap
@@ -60,10 +63,13 @@ class ClientSession:
                     pass
 
                 elif isinstance(message.root, types.JSONRPCError):
-                    raise ValueError(f"Received error: {message.root}")
+                    data = message.model_dump()
+                    data["error"]["message"] = json.loads(data.get("error").get("message", "{}"))
+                    data = json.dumps(data, indent=4)
+                    logger.error(f"Received error:\n{data}")
 
                 else:
-                    raise ValueError(f"Unknown message type: {message.root}")
+                    logger.error(f"Unknown message type: {message.root}")
 
         Task(_start_reading_messages())
 
@@ -76,12 +82,12 @@ class ClientSession:
         self.start_reading_messages()
 
         sampling = (
-            types.SamplingCapability() if self.sampling_callback is not None else None
+            types.SamplingCapability() if self.sampling_callback is not None else {}
         )
         roots = (
             types.RootsCapability(listChanged=True)
             if self.roots_callback is not None
-            else None
+            else {}
         )
 
         # send initialize request
