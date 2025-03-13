@@ -134,9 +134,10 @@ class ClientSession:
             )
         )
 
-        response = self.request_map.send_request(CreateJsonRPCRequest(request))
+        response = await self.request_map.send_request(CreateJsonRPCRequest(request))
+        result = types.ListToolsResult.model_validate(response.result)
 
-        return await response
+        return result
 
     async def call_tool(self, tool_name: str, args: dict):
         """call a tool"""
@@ -151,10 +152,12 @@ class ClientSession:
             )
         )
 
-        response = self.request_map.send_request(CreateJsonRPCRequest(request))
+        response = await self.request_map.send_request(CreateJsonRPCRequest(request))
+        result = types.ListResourcesResult.model_validate(response.result)
 
-        return await response
+        return result
 
     async def read_resource(self, resource_name: str):
         """read a resource"""
         raise NotImplementedError
+
