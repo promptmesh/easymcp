@@ -117,10 +117,11 @@ class ClientSession:
             types.JSONRPCNotification(
                 jsonrpc="2.0",
                 **notification.model_dump(by_alias=True, mode="json", exclude_none=True),
-            )
-        )  # type: ignore
+            ) # type: ignore
+        )
 
-        return response
+        result = types.InitializeResult.model_validate(response.result)
+        return result
 
     async def stop(self):
         """stop the client session"""
