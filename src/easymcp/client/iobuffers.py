@@ -13,7 +13,6 @@ async def reader(transport: GenericTransport, queue: Queue[types.JSONRPCMessage]
             
             try:
                 parsed = types.JSONRPCMessage.model_validate_json(data)
-                queue.put_nowait(parsed)
             except pydantic.ValidationError:
                 continue
 
