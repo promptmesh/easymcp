@@ -89,9 +89,9 @@ class ClientSession:
                 params=types.InitializeRequestParams(
                     protocolVersion=types.LATEST_PROTOCOL_VERSION,
                     capabilities=types.ClientCapabilities(
-                        sampling=types.SamplingCapability(),
+                        sampling=sampling,
                         experimental=None,
-                        roots=types.RootsCapability(listChanged=True),
+                        roots=roots,
                     ),
                     clientInfo=types.Implementation(name="easymcp", version="0.1.0"),
                 ),
