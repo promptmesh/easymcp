@@ -26,12 +26,18 @@ class ClientSession:
     roots_callback: Awaitable | None = None
     sampling_callback: Awaitable | None = None
 
+    _tools: types.ListToolsResult | None = None
+    _prompts: types.ListPromptsResult | None = None
+    _resources: types.ListResourcesResult | None = None
+
     def __init__(self, transport: GenericTransport):
         self.transport = transport
 
         # define message queues
         self.incoming_messages = Queue()
         self.outgoing_messages = Queue()
+
+        self._tools = None
 
     async def init(self):
         """initialize the client session"""
@@ -53,15 +59,31 @@ class ClientSession:
                 if message is None:
                     continue
 
+                # handle responses
                 if isinstance(message.root, types.JSONRPCResponse):
                     self.request_map.resolve_request(message.root)
 
+                # handle notifications
                 elif isinstance(message.root, types.JSONRPCNotification):
-                    pass
+                    if message.root.params is None:
+                        logger.error(f"Received notification with no params: {message}")
+                        continue
 
+                    notification = types.ServerNotification.model_validate(message.root)
+
+                    await self.handle_notification(notification)
+
+                # handle requests
                 elif isinstance(message.root, types.JSONRPCRequest):
-                    pass
+                    if message.root.params is None:
+                        logger.error(f"Received request with no params: {message}")
+                        continue
 
+                    request = types.ServerRequest.model_validate(message.root)
+
+                    await self.handle_request(request)
+
+                # handle errors
                 elif isinstance(message.root, types.JSONRPCError):
                     data = message.model_dump()
                     data["error"]["message"] = json.loads(
@@ -125,8 +147,12 @@ class ClientSession:
         """stop the client session"""
         await self.transport.stop()
 
-    async def list_tools(self):
+    async def list_tools(self, force: bool = False):
         """list available tools"""
+
+        if not force and self._tools is not None:
+            return self._tools
+
         request = types.ClientRequest(
             types.ListToolsRequest(
                 method="tools/list",
@@ -135,6 +161,8 @@ class ClientSession:
 
         response = await self.request_map.send_request(CreateJsonRPCRequest(request))
         result = types.ListToolsResult.model_validate(response.result)
+
+        self._tools = result
 
         return result
 
@@ -155,8 +183,11 @@ class ClientSession:
 
         return result
 
-    async def list_resources(self):
+    async def list_resources(self, force: bool = False):
         """list available resources"""
+
+        if not force and self._resources is not None:
+            return self._resources
 
         request = types.ClientRequest(
             types.ListResourcesRequest(
@@ -166,6 +197,8 @@ class ClientSession:
 
         response = await self.request_map.send_request(CreateJsonRPCRequest(request))
         result = types.ListResourcesResult.model_validate(response.result)
+
+        self._resources = result
 
         return result
 
@@ -187,8 +220,11 @@ class ClientSession:
 
         return result
 
-    async def list_prompts(self):
+    async def list_prompts(self, force: bool = False):
         """list available prompts"""
+
+        if not force and self._prompts is not None:
+            return self._prompts
 
         request = types.ClientRequest(
             types.ListPromptsRequest(
@@ -198,6 +234,8 @@ class ClientSession:
 
         response = await self.request_map.send_request(CreateJsonRPCRequest(request))
         result = types.ListPromptsResult.model_validate(response.result)
+
+        self._prompts = result
 
         return result
     
@@ -218,3 +256,25 @@ class ClientSession:
         result = types.GetPromptResult.model_validate(response.result)
 
         return result
+    
+    async def handle_notification(self, notification: types.ServerNotification):
+        """handle a notification"""
+
+        logger.debug(f"Handling notification: {notification}")
+
+        if isinstance(notification.root, types.ToolListChangedNotification):
+            self._tools = None
+            logger.debug("cleared tools cache")
+
+        elif isinstance(notification.root, types.PromptListChangedNotification):
+            self._prompts = None
+            logger.debug("cleared prompts cache")
+
+        elif isinstance(notification.root, types.ResourceListChangedNotification):
+            self._resources = None
+            logger.debug("cleared resources cache")
+
+    async def handle_request(self, request: types.ServerRequest):
+        """handle a request"""
+        
+        logger.debug(f"Handling request: {request}")
