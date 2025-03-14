@@ -39,6 +39,14 @@ async def main():
     print("Calling tool")
     print(await mgr.call_tool("timeserver.get-current-time", {}))
 
+    print("Listing resources")
+    print(await mgr.list_resources())
+
+    print("Reading resource")
+    # await mgr.sessions["timeserver"].read_resource("datetime://Africa/Algiers/now")
+    print(await mgr.read_resource("mcp-timeserver+datetime://Africa/Algiers/now"))
+
+
     await asyncio.Future()
 
 asyncio.run(main())

@@ -1,5 +1,7 @@
 import asyncio
 from typing import Awaitable
+
+from pydantic import AnyUrl
 from easymcp.client.ClientSession import ClientSession
 from easymcp.client.SessionMaker import make_transport, transportTypes
 from easymcp.vendored import types
@@ -114,11 +116,46 @@ class ClientManager:
 
     async def list_resources(self):
         """list resources on all servers"""
-        raise NotImplementedError
 
-    async def read_resource(self, uri: str):
+        result: list[types.Resource] = []
+
+        for name, session in self.sessions.items():
+            resources = await session.list_resources()
+            if resources is None:
+                continue
+            for resource in resources.resources:
+
+                # do not map known schemes to mcp
+                if resource.uri.scheme not in (
+                    "http",
+                    "https",
+                ):
+                    resource.uri = AnyUrl(f"mcp-{name}+{resource.uri}")
+
+                result.append(resource)
+
+        return result
+
+    async def read_resource(self, uri: AnyUrl | str):
         """read a resource"""
-        raise NotImplementedError
+
+        if not isinstance(uri, AnyUrl):
+            uri = AnyUrl(uri)
+
+        if "+" not in uri.scheme:
+            raise ValueError("Resource URI must be in the format mcp-<server>+<uri>")
+        
+        server_name, resource_scheme = uri.scheme.split("+", 1)
+        server_name = server_name.removeprefix("mcp-")
+        session = self.sessions.get(server_name)
+
+        if session is None:
+            raise ValueError(f"Server {server_name} not found")
+        
+        # new_uri = str(URL(str(uri)).with_scheme(resource_scheme))
+        new_uri = str(uri).removeprefix(f"mcp-{server_name}+")
+        
+        return await session.read_resource(new_uri)
 
     async def list_prompts(self):
         """list prompts on all servers"""

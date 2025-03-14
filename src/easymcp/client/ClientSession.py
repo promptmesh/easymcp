@@ -86,11 +86,17 @@ class ClientSession:
                 # handle errors
                 elif isinstance(message.root, types.JSONRPCError):
                     data = message.model_dump()
-                    data["error"]["message"] = json.loads(
-                        data.get("error").get("message", "{}")
-                    )
-                    data = json.dumps(data, indent=4)
-                    logger.error(f"Received error:\n{data}")
+                    try:
+                        data["error"]["message"] = json.loads(
+                            data.get("error").get("message", "{}")
+                        )
+                        data = json.dumps(data, indent=4)
+                        logger.error(f"Received error:\n{data}")
+                    except Exception:
+                        pass
+
+                    if message.root.id is not None:
+                        self.request_map.resolve_error(message.root)
 
                 else:
                     logger.error(f"Unknown message type: {message.root}")
@@ -125,6 +131,8 @@ class ClientSession:
         )
 
         response = await self.request_map.send_request(CreateJsonRPCRequest(request))  # type: ignore
+        if response is None:
+            raise RuntimeError("Failed to initialize client session")
 
         # send initialized notification
         notification = types.ClientNotification(
@@ -160,7 +168,11 @@ class ClientSession:
         )
 
         response = await self.request_map.send_request(CreateJsonRPCRequest(request))
-        result = types.ListToolsResult.model_validate(response.result)
+
+        if response is None:
+            result = types.ListToolsResult(tools=[])
+        else:
+            result = types.ListToolsResult.model_validate(response.result)
 
         self._tools = result
 
@@ -179,6 +191,10 @@ class ClientSession:
         )
 
         response = await self.request_map.send_request(CreateJsonRPCRequest(request))
+        
+        if response is None:
+            raise RuntimeError("Failed to call tool")
+
         result = types.CallToolResult.model_validate(response.result)
 
         return result
@@ -196,7 +212,11 @@ class ClientSession:
         )
 
         response = await self.request_map.send_request(CreateJsonRPCRequest(request))
-        result = types.ListResourcesResult.model_validate(response.result)
+
+        if response is None:
+            result = types.ListResourcesResult(resources=[])
+        else:
+            result = types.ListResourcesResult.model_validate(response.result)
 
         self._resources = result
 
@@ -216,6 +236,10 @@ class ClientSession:
         )
 
         response = await self.request_map.send_request(CreateJsonRPCRequest(request))
+        
+        if response is None:
+            raise RuntimeError("Failed to read resource")
+        
         result = types.ReadResourceResult.model_validate(response.result)
 
         return result
@@ -233,7 +257,11 @@ class ClientSession:
         )
 
         response = await self.request_map.send_request(CreateJsonRPCRequest(request))
-        result = types.ListPromptsResult.model_validate(response.result)
+
+        if response is None:
+            result = types.ListPromptsResult(prompts=[])
+        else:
+            result = types.ListPromptsResult.model_validate(response.result)
 
         self._prompts = result
 

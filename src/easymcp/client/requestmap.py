@@ -8,7 +8,7 @@ from loguru import logger
 class RequestMap:
     """RequestMap class"""
 
-    requests: dict[str, Future[types.JSONRPCResponse]]
+    requests: dict[str, Future[types.JSONRPCResponse | None]]
 
     outgoing_messages: Queue[types.JSONRPCMessage]
 
@@ -21,7 +21,7 @@ class RequestMap:
 
         logger.debug(f"Sending request: {message}")
 
-        future = Future[types.JSONRPCResponse]()
+        future = Future[types.JSONRPCResponse | None]()
 
         self.requests[str(message.id)] = future
 
@@ -38,3 +38,13 @@ class RequestMap:
         future = self.requests.pop(str(request_id), None)
         if future is not None:
             future.set_result(message)
+
+    def resolve_error(self, message: types.JSONRPCError):
+        """resolve an error"""
+
+        logger.debug(f"Resolving error: {message}")
+
+        request_id = message.id
+        future = self.requests.pop(str(request_id), None)
+        if future is not None:
+            future.set_result(None)
