@@ -83,14 +83,8 @@ class ClientSession:
 
         self.start_reading_messages()
 
-        sampling = (
-            types.SamplingCapability() if self.sampling_callback is not None else {}
-        )
-        roots = (
-            types.RootsCapability(listChanged=True)
-            if self.roots_callback is not None
-            else {}
-        )
+        sampling = types.SamplingCapability()
+        roots = types.RootsCapability(listChanged=True)
 
         # send initialize request
         request = types.ClientRequest(
