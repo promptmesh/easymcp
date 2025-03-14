@@ -192,3 +192,35 @@ class ClientSession:
         result = types.ReadResourceResult.model_validate(response.result)
 
         return result
+
+    async def list_prompts(self):
+        """list available prompts"""
+
+        request = types.ClientRequest(
+            types.ListPromptsRequest(
+                method="prompts/list",
+            )
+        )
+
+        response = await self.request_map.send_request(CreateJsonRPCRequest(request))
+        result = types.ListPromptsResult.model_validate(response.result)
+
+        return result
+    
+    async def read_prompt(self, prompt_name: str, args: dict):
+        """read a prompt"""
+
+        request = types.ClientRequest(
+            types.GetPromptRequest(
+                method="prompts/get",
+                params=types.GetPromptRequestParams(
+                    name=prompt_name,
+                    arguments=args,
+                ),
+            )
+        )
+
+        response = await self.request_map.send_request(CreateJsonRPCRequest(request))
+        result = types.GetPromptResult.model_validate(response.result)
+
+        return result
