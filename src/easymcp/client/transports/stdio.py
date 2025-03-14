@@ -131,11 +131,6 @@ class StdioTransport(GenericTransport):
 
     async def stop(self):
         """Stop the transport gracefully."""
-        if self.state == "stopped":
-            return
-
-        self.state = "stopping"
-        self.read_buffer = ReadBuffer()  # Clear buffer
 
         try:
             if self.subprocess:
