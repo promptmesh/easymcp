@@ -4,11 +4,12 @@ import easymcp.vendored.types as types
 
 from loguru import logger
 
+
 class RequestMap:
     """RequestMap class"""
 
     requests: dict[str, Future[types.JSONRPCResponse]]
-    
+
     outgoing_messages: Queue[types.JSONRPCMessage]
 
     def __init__(self, outgoing_messages: Queue[types.JSONRPCMessage]):
@@ -17,7 +18,7 @@ class RequestMap:
 
     def send_request(self, message: types.JSONRPCRequest):
         """send a request"""
-        
+
         logger.debug(f"Sending request: {message}")
 
         future = Future[types.JSONRPCResponse]()
@@ -27,7 +28,7 @@ class RequestMap:
         wrapped_message = types.JSONRPCMessage(message)
         self.outgoing_messages.put_nowait(wrapped_message)
         return future
-    
+
     def resolve_request(self, message: types.JSONRPCResponse):
         """resolve a request"""
 

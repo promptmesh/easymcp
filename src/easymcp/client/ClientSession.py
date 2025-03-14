@@ -2,7 +2,6 @@ from asyncio import Queue, Task
 import json
 from typing import Awaitable
 
-from httpx import request
 from loguru import logger
 
 from easymcp.client.iobuffers import reader, writer
@@ -65,7 +64,9 @@ class ClientSession:
 
                 elif isinstance(message.root, types.JSONRPCError):
                     data = message.model_dump()
-                    data["error"]["message"] = json.loads(data.get("error").get("message", "{}"))
+                    data["error"]["message"] = json.loads(
+                        data.get("error").get("message", "{}")
+                    )
                     data = json.dumps(data, indent=4)
                     logger.error(f"Received error:\n{data}")
 
@@ -117,8 +118,10 @@ class ClientSession:
         self.outgoing_messages.put_nowait(
             types.JSONRPCNotification(
                 jsonrpc="2.0",
-                **notification.model_dump(by_alias=True, mode="json", exclude_none=True),
-            ) # type: ignore
+                **notification.model_dump(
+                    by_alias=True, mode="json", exclude_none=True
+                ),
+            )  # type: ignore
         )
 
         result = types.InitializeResult.model_validate(response.result)
@@ -174,13 +177,13 @@ class ClientSession:
 
     async def read_resource(self, resource_name: str):
         """read a resource"""
-        
+
         request = types.ClientRequest(
             types.ReadResourceRequest(
                 method="resources/read",
                 params=types.ReadResourceRequestParams(
-                    # TODO: validate uri 
-                    uri=resource_name, # type: ignore
+                    # TODO: validate uri
+                    uri=resource_name,  # type: ignore
                 ),
             )
         )
@@ -189,4 +192,3 @@ class ClientSession:
         result = types.ReadResourceResult.model_validate(response.result)
 
         return result
-

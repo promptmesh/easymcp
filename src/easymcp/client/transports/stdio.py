@@ -65,7 +65,7 @@ class StdioTransport(GenericTransport):
 
     async def init(self):
         """Perform initialization."""
-        
+
         self.state = "initialized"
 
         # Resolve command

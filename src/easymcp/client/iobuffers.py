@@ -5,13 +5,14 @@ import pydantic
 from easymcp.client.transports.generic import GenericTransport
 from easymcp.vendored import types
 
+
 async def reader(transport: GenericTransport, queue: Queue[types.JSONRPCMessage]):
     """Read data from the transport and put it in the queue"""
 
     async def _reader():
         while transport.state == "started":
             data = await transport.receive()
-            
+
             try:
                 parsed = types.JSONRPCMessage.model_validate_json(data)
             except pydantic.ValidationError:
@@ -26,6 +27,7 @@ async def reader(transport: GenericTransport, queue: Queue[types.JSONRPCMessage]
     task = Task(_reader())
     return task
 
+
 async def writer(transport: GenericTransport, queue: Queue[types.JSONRPCMessage]):
     """Write data from the queue to the transport"""
 
@@ -36,4 +38,3 @@ async def writer(transport: GenericTransport, queue: Queue[types.JSONRPCMessage]
 
     task = Task(_writer())
     return task
-

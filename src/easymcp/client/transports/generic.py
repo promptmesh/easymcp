@@ -2,11 +2,11 @@ from abc import ABC, abstractmethod
 from typing import Literal
 from pydantic import BaseModel
 
+
 class GenericTransport(ABC):
     """Generic abstract class for transports"""
 
     state: Literal["constructed", "initialized", "started", "stopped"]
-
 
     def __init__(self, arguments: BaseModel):
         self.state = "constructed"
@@ -25,12 +25,12 @@ class GenericTransport(ABC):
     async def stop(self):
         """stop the transport"""
         self.state = "stopped"
-    
+
     @abstractmethod
     async def send(self, message: str):
         """send data to the transport"""
         raise NotImplementedError
-    
+
     @abstractmethod
     async def receive(self) -> str:
         """receive data from the transport"""

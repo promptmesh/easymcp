@@ -1,8 +1,7 @@
-from multiprocessing import connection
 import httpx
 from easymcp.client.transports.generic import GenericTransport
-from easymcp.vendored import types
 from pydantic import BaseModel
+
 
 class SseServerParameters(BaseModel):
     """SseServerParameters class"""
@@ -16,6 +15,7 @@ class SseServerParameters(BaseModel):
 
 class SseTransport(GenericTransport):
     """SseTransport class"""
+
     args: SseServerParameters
     client: httpx.AsyncClient
     connection = None
@@ -34,13 +34,11 @@ class SseTransport(GenericTransport):
             headers=self.args.headers,
         )
 
-
     async def start(self):
         """Start the transport"""
         self.state = "started"
 
         self.connection = self.client.get()
-
 
     async def send(self, message: str):
         """Send data to the transport"""
@@ -49,7 +47,7 @@ class SseTransport(GenericTransport):
     async def receive(self) -> str:
         """Receive data from the transport"""
         raise NotImplementedError
-    
+
     async def stop(self):
         """Stop the transport"""
         self.state = "stopped"
