@@ -97,6 +97,7 @@ class StdioTransport(GenericTransport):
 
     async def send(self, message: str):
         """Send a newline-delimited JSON message."""
+        assert self.subprocess is not None, "subprocess is not open"
         assert self.subprocess.stdin is not None, "subprocess stdin is not open"
 
         formatted_message = message.strip() + "\n"  # Ensure newline
@@ -107,6 +108,7 @@ class StdioTransport(GenericTransport):
 
     async def receive(self):
         """Receive a full message using buffered reading."""
+        assert self.subprocess is not None, "subprocess is not open"
         assert self.subprocess.stdout is not None, "subprocess stdout is not open"
 
         while True:
@@ -120,9 +122,14 @@ class StdioTransport(GenericTransport):
             if message:
                 logger.debug(f"Received message: {message}")
                 return message  # Return complete message
+            
+        raise RuntimeError("Subprocess stdout is not open")
 
     async def read_stderr(self):
         """Continuously read and print stderr."""
+        if self.subprocess is None:
+            return
+
         if self.subprocess.stderr is None:
             return
 
