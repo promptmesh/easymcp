@@ -2,6 +2,7 @@ import asyncio
 from typing import Awaitable
 from easymcp.client.ClientSession import ClientSession
 from easymcp.client.SessionMaker import make_transport, transportTypes
+from easymcp.vendored import types
 
 
 class ClientManager:
@@ -82,13 +83,34 @@ class ClientManager:
 
         return list(self.sessions.keys())
 
-    async def list_tools(self):
+    async def list_tools(self, force: bool = False):
         """list tools on all servers"""
-        raise NotImplementedError
+
+        result: list[types.Tool] = []
+
+        for name, session in self.sessions.items():
+            tools = await session.list_tools(force=force)
+            if tools is None:
+                continue
+            for tool in tools.tools:
+                tool.name = f"{name}.{tool.name}"
+                result.append(tool)
+
+        return result
 
     async def call_tool(self, name: str, args: dict):
         """call a tool"""
-        raise NotImplementedError
+        
+        if "." not in name:
+            raise ValueError("Tool name must be in the format <server>.<tool>")
+        
+        server_name, tool_name = name.split(".", 1)
+        session = self.sessions.get(server_name)
+
+        if session is None:
+            raise ValueError(f"Server {server_name} not found")
+        
+        return await session.call_tool(tool_name, args)
 
     async def list_resources(self):
         """list resources on all servers"""

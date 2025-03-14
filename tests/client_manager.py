@@ -25,13 +25,19 @@ async def main():
     await mgr.init(servers=servers)
     print(mgr.list_servers())
 
-    print("Removing searxng")
-    await mgr.remove_server("searxng")
-    print(mgr.list_servers())
+    # print("Removing searxng")
+    # await mgr.remove_server("searxng")
+    # print(mgr.list_servers())
 
-    print("Adding searxng")
-    await mgr.add_server("searxng", searxng)
-    print(mgr.list_servers())
+    # print("Adding searxng")
+    # await mgr.add_server("searxng", searxng)
+    # print(mgr.list_servers())
+
+    print("Listing tools")
+    print(await mgr.list_tools())
+
+    print("Calling tool")
+    print(await mgr.call_tool("timeserver.get-current-time", {}))
 
     await asyncio.Future()
 
