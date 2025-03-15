@@ -130,7 +130,7 @@ class ClientManager:
                     "http",
                     "https",
                 ):
-                    resource.uri = AnyUrl(f"mcp-{name}+{resource.uri}")
+                    resource.uri = AnyUrl(f"mcp://{name}+{resource.uri}")
 
                 result.append(resource)
 
