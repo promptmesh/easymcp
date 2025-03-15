@@ -93,6 +93,14 @@ Resources are namespaced in a way that makes it easy to make a resource URI to a
 - ingest resources into a search system like elastic search without having to store metadata about the server
 - completely eliminate the need to map URIs to servers via a database or lookup table
 
+## Comparison of classes to other MCP libraries
+
+| **easyMCP**    | **modelcontextprotocol/python-sdk** |
+| -------------- | ----------------------------------- |
+| ClientManager  |                                     |
+| ClientSession  | ClientSession                       |
+| StdioTransport | stdio_client                        |
+
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
