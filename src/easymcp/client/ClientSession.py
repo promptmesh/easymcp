@@ -59,6 +59,8 @@ class ClientSession:
                 if message is None:
                     continue
 
+                logger.debug(f"Received message: {message}")
+
                 # handle responses
                 if isinstance(message.root, types.JSONRPCResponse):
                     self.request_map.resolve_request(message.root)
