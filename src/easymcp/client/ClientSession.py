@@ -122,7 +122,7 @@ class ClientSession:
                     protocolVersion=types.LATEST_PROTOCOL_VERSION,
                     capabilities=types.ClientCapabilities(
                         sampling=sampling,
-                        experimental=None,
+                        experimental={},
                         roots=roots,
                     ),
                     clientInfo=types.Implementation(name="easymcp", version="0.1.0"),
