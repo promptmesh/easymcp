@@ -4,6 +4,7 @@ from typing import Awaitable
 from pydantic import AnyUrl
 from easymcp.client.ClientSession import ClientSession
 from easymcp.client.SessionMaker import make_transport, transportTypes
+from easymcp.client.utils import format_server_name
 from easymcp.vendored import types
 
 
@@ -23,6 +24,10 @@ class ClientManager:
         self.sessions = dict()
 
         for server_name, server in servers.items():
+            server_name = format_server_name(server_name)
+            if server_name in self.sessions:
+                raise ValueError(f"Server name {server_name} already exists")
+
             self.sessions[server_name] = make_transport(server)
 
         await asyncio.gather(*[session.init() for session in self.sessions.values()])
@@ -50,6 +55,8 @@ class ClientManager:
     async def add_server(self, name: str, transport: transportTypes):
         """add a server to the manager"""
 
+        name = format_server_name(name)
+
         if name in self.sessions:
             raise ValueError(f"Session {name} already exists")
 
@@ -71,6 +78,8 @@ class ClientManager:
 
     async def remove_server(self, name: str):
         """remove a server from the manager"""
+
+        name = format_server_name(name)
 
         if name not in self.sessions:
             raise ValueError(f"Session {name} does not exist")
@@ -102,16 +111,16 @@ class ClientManager:
 
     async def call_tool(self, name: str, args: dict):
         """call a tool"""
-        
+
         if "." not in name:
             raise ValueError("Tool name must be in the format <server>.<tool>")
-        
+
         server_name, tool_name = name.split(".", 1)
         session = self.sessions.get(server_name)
 
         if session is None:
             raise ValueError(f"Server {server_name} not found")
-        
+
         return await session.call_tool(tool_name, args)
 
     async def list_resources(self):
@@ -124,7 +133,6 @@ class ClientManager:
             if resources is None:
                 continue
             for resource in resources.resources:
-
                 # do not map known schemes to mcp
                 if resource.uri.scheme not in (
                     "http",
@@ -144,22 +152,33 @@ class ClientManager:
 
         if "+" not in uri.scheme:
             raise ValueError("Resource URI must be in the format mcp-<server>+<uri>")
-        
+
         server_name, resource_scheme = uri.scheme.split("+", 1)
         server_name = server_name.removeprefix("mcp-")
         session = self.sessions.get(server_name)
 
         if session is None:
             raise ValueError(f"Server {server_name} not found")
-        
+
         # new_uri = str(URL(str(uri)).with_scheme(resource_scheme))
         new_uri = str(uri).removeprefix(f"mcp-{server_name}+")
-        
+
         return await session.read_resource(new_uri)
 
     async def list_prompts(self):
         """list prompts on all servers"""
-        raise NotImplementedError
+
+        result: list[types.Prompt] = []
+
+        for name, session in self.sessions.items():
+            prompts = await session.list_prompts()
+            if prompts is None:
+                continue
+            for prompt in prompts.prompts:
+                prompt.name = f"{name}.{prompt.name}"
+                result.append(prompt)
+
+        return result
 
     async def read_prompt(self, name: str, args: dict):
         """read a prompt"""
