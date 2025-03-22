@@ -1,5 +1,5 @@
 import asyncio
-from typing import Awaitable
+from typing import Awaitable, Callable
 
 from pydantic import AnyUrl
 from easymcp.client.ClientSession import ClientSession
@@ -11,8 +11,12 @@ from easymcp.vendored import types
 class ClientManager:
     """ClientManager class"""
 
-    default_list_roots_callback: Awaitable | None = None
-    default_list_sampling_callback: Awaitable | None = None
+    default_list_roots_callback: Callable[[types.ListRootsRequest], Awaitable[types.ListRootsResult]] | None = None
+    default_list_sampling_callback: Callable[[types.CreateMessageRequest], Awaitable[types.CreateMessageResult]] | None = None
+
+    default_list_tools_changed_callback: Callable[[], Awaitable[None]] | None = None
+    default_list_prompts_changed_callback: Callable[[], Awaitable[None]] | None = None
+    default_list_resources_changed_callback: Callable[[], Awaitable[None]] | None = None
 
     sessions: dict[str, ClientSession]
 
@@ -185,14 +189,42 @@ class ClientManager:
         raise NotImplementedError
 
     # callbacks
-    async def register_roots_callback(self, callback: Awaitable):
+    async def register_roots_callback(self, callback: Callable[[types.ListRootsRequest], Awaitable[types.ListRootsResult]]):
         """register a callback for roots"""
+        ClientSession._validate_async_callback(callback, "roots_callback")
+
         self.default_list_roots_callback = callback
         for session in self.sessions.values():
             await session.register_roots_callback(callback)
 
-    async def register_sampling_callback(self, callback: Awaitable):
+    async def register_sampling_callback(self, callback: Callable[[types.CreateMessageRequest], Awaitable[types.CreateMessageResult]]):
         """register a callback for sampling"""
+        ClientSession._validate_async_callback(callback, "sampling_callback")
+
         self.default_list_sampling_callback = callback
         for session in self.sessions.values():
             await session.register_sampling_callback(callback)
+
+    async def register_tools_changed_callback(self, callback: Callable[[], Awaitable[None]]):
+        """register a callback for tools changed"""
+        ClientSession._validate_async_callback(callback, "tools_changed_callback")
+
+        self.default_list_tools_changed_callback = callback
+        for session in self.sessions.values():
+            await session.register_tools_changed_callback(callback)
+
+    async def register_prompts_changed_callback(self, callback: Callable[[], Awaitable[None]]):
+        """register a callback for prompts changed"""
+        ClientSession._validate_async_callback(callback, "prompts_changed_callback")
+
+        self.default_list_prompts_changed_callback = callback
+        for session in self.sessions.values():
+            await session.register_prompts_changed_callback(callback)
+
+    async def register_resources_changed_callback(self, callback: Callable[[], Awaitable[None]]):
+        """register a callback for resources changed"""
+        ClientSession._validate_async_callback(callback, "resources_changed_callback")
+        
+        self.default_list_resources_changed_callback = callback
+        for session in self.sessions.values():
+            await session.register_resources_changed_callback(callback)

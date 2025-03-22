@@ -1,6 +1,7 @@
 from asyncio import Queue, Task
+from inspect import iscoroutinefunction
 import json
-from typing import Awaitable
+from typing import Awaitable, Callable
 
 from loguru import logger
 
@@ -23,8 +24,12 @@ class ClientSession:
 
     request_map: RequestMap
 
-    roots_callback: Awaitable | None = None
-    sampling_callback: Awaitable | None = None
+    roots_callback: Callable[[types.ListRootsRequest], Awaitable[types.ListRootsResult]] | None = None
+    sampling_callback: Callable[[types.CreateMessageRequest], Awaitable[types.CreateMessageResult]] | None = None
+
+    tools_changed_callback: Callable[[], Awaitable[None]] | None = None
+    prompts_changed_callback: Callable[[], Awaitable[None]] | None = None
+    resources_changed_callback: Callable[[], Awaitable[None]] | None = None
 
     _tools: types.ListToolsResult | None = None
     _prompts: types.ListPromptsResult | None = None
@@ -44,16 +49,38 @@ class ClientSession:
         await self.transport.init()
         self.request_map = RequestMap(self.outgoing_messages)
 
-    async def register_roots_callback(self, callback: Awaitable):
+    @staticmethod
+    def _validate_async_callback(callback: Callable, name: str):
+        assert callable(callback), f"{name} must be callable"
+        assert iscoroutinefunction(callback), f"{name} must be an async function"
+
+    async def register_roots_callback(self, callback: Callable[[types.ListRootsRequest], Awaitable[types.ListRootsResult]]):
         """register a callback for roots"""
+        self._validate_async_callback(callback, "roots_callback")
         self.roots_callback = callback
 
-    async def register_sampling_callback(self, callback: Awaitable):
+    async def register_sampling_callback(self, callback: Callable[[types.CreateMessageRequest], Awaitable[types.CreateMessageResult]]):
         """register a callback for sampling"""
+        self._validate_async_callback(callback, "sampling_callback")
         self.sampling_callback = callback
 
-    def start_reading_messages(self):
-        async def _start_reading_messages():
+    async def register_tools_changed_callback(self, callback: Callable[[], Awaitable[None]]):
+        """register a callback for tools changed"""
+        self._validate_async_callback(callback, "tools_changed_callback")
+        self.tools_changed_callback = callback
+
+    async def register_prompts_changed_callback(self, callback: Callable[[], Awaitable[None]]):
+        """register a callback for prompts changed"""
+        self._validate_async_callback(callback, "prompts_changed_callback")
+        self.prompts_changed_callback = callback
+
+    async def register_resources_changed_callback(self, callback: Callable[[], Awaitable[None]]):
+        """register a callback for resources changed"""
+        self._validate_async_callback(callback, "resources_changed_callback")
+        self.resources_changed_callback = callback
+
+    def _start_reading_messages(self):
+        async def __start_reading_messages():
             while self.transport.state == "started":
                 message = await self.incoming_messages.get()
                 if message is None:
@@ -81,7 +108,14 @@ class ClientSession:
 
                     request = types.ServerRequest.model_validate(message.root)
 
-                    await self.handle_request(request)
+                    response = await self.handle_request(request)
+                    if response is not None:
+                        response_message = types.JSONRPCResponse(
+                            jsonrpc="2.0",
+                            id=message.root.id,
+                            result=response,
+                        )
+                        await self.transport.send(response_message.model_dump_json())
 
                 # handle errors
                 elif isinstance(message.root, types.JSONRPCError):
@@ -101,7 +135,7 @@ class ClientSession:
                 else:
                     logger.error(f"Unknown message type: {message.root}")
 
-        Task(_start_reading_messages())
+        Task(__start_reading_messages())
 
     async def start(self) -> types.InitializeResult:
         """start the client session"""
@@ -109,7 +143,7 @@ class ClientSession:
         self.reader_task = await reader(self.transport, self.incoming_messages)
         self.writer_task = await writer(self.transport, self.outgoing_messages)
 
-        self.start_reading_messages()
+        self._start_reading_messages()
 
         sampling = types.SamplingCapability()
         roots = types.RootsCapability(listChanged=True)
@@ -293,16 +327,55 @@ class ClientSession:
         if isinstance(notification.root, types.ToolListChangedNotification):
             self._tools = None
             logger.debug("cleared tools cache")
+            if self.tools_changed_callback is not None:
+                await self.tools_changed_callback()
 
         elif isinstance(notification.root, types.PromptListChangedNotification):
             self._prompts = None
             logger.debug("cleared prompts cache")
+            if self.prompts_changed_callback is not None:
+                await self.prompts_changed_callback()
 
         elif isinstance(notification.root, types.ResourceListChangedNotification):
             self._resources = None
             logger.debug("cleared resources cache")
+            if self.resources_changed_callback is not None:
+                await self.resources_changed_callback()
 
     async def handle_request(self, request: types.ServerRequest):
         """handle a request"""
         
         logger.debug(f"Handling request: {request}")
+
+        # handle ping
+        if isinstance(request.root, types.PingRequest):
+            return {}
+
+        # handle sampling
+        elif isinstance(request.root, types.CreateMessageRequest):
+            if self.sampling_callback is None:
+                logger.error("Sampling callback not set but received sampling request")
+                return
+            
+            sampling_result = await self.sampling_callback(request.root)
+
+            assert isinstance(sampling_result, types.CreateMessageResult), "Sampling callback must return a CreateMessageResult"
+            
+            return sampling_result.model_dump()
+
+        # handle list roots
+        elif isinstance(request.root, types.ListRootsRequest):
+            if self.roots_callback is None:
+                logger.error("Roots callback not set but received roots request")
+                return
+
+            roots_result = await self.roots_callback(request.root)
+
+            assert isinstance(roots_result, types.ListRootsResult), "Roots callback must return a ListRootsResult"
+
+            return roots_result.model_dump()
+
+        # throw error for unknown request
+        else:
+            logger.error(f"Unknown request type: {request.root}")
+            return
