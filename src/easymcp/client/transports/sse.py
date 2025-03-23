@@ -1,6 +1,6 @@
 import httpx
-from easymcp.client.transports.generic import GenericTransport
 from pydantic import BaseModel
+from easymcp.client.transports.generic import TransportProtocol
 
 
 class SseServerParameters(BaseModel):
@@ -13,7 +13,7 @@ class SseServerParameters(BaseModel):
     """headers to send"""
 
 
-class SseTransport(GenericTransport):
+class SseTransport(TransportProtocol):
     """SseTransport class"""
 
     args: SseServerParameters
@@ -21,7 +21,6 @@ class SseTransport(GenericTransport):
     connection = None
 
     def __init__(self, arguments: SseServerParameters):
-        super().__init__(arguments)
         self.state = "constructed"
         self.args = arguments.model_copy(deep=True)
 
@@ -29,16 +28,13 @@ class SseTransport(GenericTransport):
         """Perform init logic"""
         self.state = "initialized"
 
-        self.client = httpx.AsyncClient(
-            base_url=self.args.url,
-            headers=self.args.headers,
-        )
+        raise NotImplementedError
 
     async def start(self):
         """Start the transport"""
         self.state = "started"
 
-        self.connection = self.client.get()
+        raise NotImplementedError
 
     async def send(self, message: str):
         """Send data to the transport"""
