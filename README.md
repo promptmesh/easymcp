@@ -95,11 +95,11 @@ Resources are namespaced in a way that makes it easy to make a resource URI to a
 
 ## Comparison of classes to other MCP libraries
 
-| **easyMCP**    | **modelcontextprotocol/python-sdk** |
-| -------------- | ----------------------------------- |
-| ClientManager  |                                     |
-| ClientSession  | ClientSession                       |
-| StdioTransport | stdio_client                        |
+| **easyMCP**    | **modelcontextprotocol/python-sdk** |                              |
+| -------------- | ----------------------------------- | ---------------------------- |
+| ClientManager  |                                     | manages multiple MCP servers |
+| ClientSession  | ClientSession                       | manages a single MCP server  |
+| StdioTransport | stdio_client                        | raw subprocess transport     |
 
 ## License
 
