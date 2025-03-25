@@ -17,10 +17,16 @@ class PromptsCompatible(Protocol):
     async def read_prompt(self, prompt_name: str, args: dict) -> types.GetPromptResult: ...
 
 @runtime_checkable
-class SessionProtocol(ToolsCompatible, ResourcesCompatible, PromptsCompatible, Protocol):
+class InitializerProtocol(Protocol):
     async def init(self) -> None: ...
+
+@runtime_checkable
+class LifeSpanProtocol(InitializerProtocol, Protocol):
     async def start(self) -> types.InitializeResult: ...
     async def stop(self) -> None: ...
+
+@runtime_checkable
+class SessionProtocol(LifeSpanProtocol, ToolsCompatible, ResourcesCompatible, PromptsCompatible, Protocol):
 
     async def register_roots_callback(
         self,
