@@ -10,7 +10,7 @@ from easymcp.client.requestmap import RequestMap
 from easymcp.client.transports.generic import TransportProtocol
 
 from easymcp.client.utils import CreateJsonRPCRequest
-from easymcp.vendored import types
+from mcp import types
 
 from easymcp.client.sessions.GenericSession import BaseSessionProtocol
 

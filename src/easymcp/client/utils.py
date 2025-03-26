@@ -1,7 +1,7 @@
 from uuid import uuid4
 from re import sub
 
-from easymcp.vendored.types import ClientRequest, JSONRPCRequest
+from mcp.types import ClientRequest, JSONRPCRequest
 
 
 def CreateJsonRPCRequest(request: ClientRequest) -> JSONRPCRequest:

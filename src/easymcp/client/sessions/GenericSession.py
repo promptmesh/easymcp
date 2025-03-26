@@ -1,6 +1,6 @@
 from typing import Protocol, runtime_checkable, Awaitable, Callable
 
-from easymcp.vendored import types
+from mcp import types
 
 # === Core Capability Protocols ===
 

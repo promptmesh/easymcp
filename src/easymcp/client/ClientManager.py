@@ -6,7 +6,7 @@ from pydantic import AnyUrl
 from easymcp.client.sessions.GenericSession import BaseSessionProtocol
 from easymcp.client.SessionMaker import make_transport, transportTypes
 from easymcp.client.utils import format_server_name
-from easymcp.vendored import types
+from mcp import types
 
 
 class ClientManager:

@@ -3,7 +3,7 @@ from asyncio import Queue, Task
 from loguru import logger
 import pydantic
 from easymcp.client.transports.generic import TransportProtocol
-from easymcp.vendored import types
+from mcp import types
 
 
 async def reader(transport: TransportProtocol, queue: Queue[types.JSONRPCMessage]):
