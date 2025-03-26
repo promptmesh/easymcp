@@ -1,13 +1,13 @@
 from typing import TypeAlias
 
-from easymcp.client.sessions.GenericSession import SessionProtocol
-from easymcp.client.sessions.MCPClientSession import MCPClientSession
+from easymcp.client.sessions.GenericSession import BaseSessionProtocol
+from easymcp.client.sessions.mcp import MCPClientSession
 from easymcp.client.transports.stdio import StdioTransport, StdioServerParameters
 
 
 transportTypes: TypeAlias = StdioServerParameters
 
-def make_transport(arguments: transportTypes) -> SessionProtocol:
+def make_transport(arguments: transportTypes) -> BaseSessionProtocol:
 
     if isinstance(arguments, StdioServerParameters):
         return MCPClientSession(StdioTransport(arguments))

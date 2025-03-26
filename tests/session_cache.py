@@ -1,6 +1,6 @@
 import asyncio
 import time
-from easymcp.client.sessions.MCPClientSession import MCPClientSession
+from easymcp.client.sessions.mcp import MCPClientSession
 from easymcp.client.transports.stdio import StdioTransport, StdioServerParameters
 
 class AsyncTimer:

@@ -3,7 +3,7 @@ from inspect import iscoroutinefunction
 from typing import Awaitable, Callable
 
 from pydantic import AnyUrl
-from easymcp.client.sessions.GenericSession import SessionProtocol
+from easymcp.client.sessions.GenericSession import BaseSessionProtocol
 from easymcp.client.SessionMaker import make_transport, transportTypes
 from easymcp.client.utils import format_server_name
 from easymcp.vendored import types
@@ -19,7 +19,7 @@ class ClientManager:
     default_list_prompts_changed_callback: Callable[[], Awaitable[None]] | None = None
     default_list_resources_changed_callback: Callable[[], Awaitable[None]] | None = None
 
-    sessions: dict[str, SessionProtocol]
+    sessions: dict[str, BaseSessionProtocol]
 
     def __init__(self):
         pass

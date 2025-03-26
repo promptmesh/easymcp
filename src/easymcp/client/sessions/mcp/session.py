@@ -12,9 +12,9 @@ from easymcp.client.transports.generic import TransportProtocol
 from easymcp.client.utils import CreateJsonRPCRequest
 from easymcp.vendored import types
 
-from easymcp.client.sessions.GenericSession import SessionProtocol
+from easymcp.client.sessions.GenericSession import BaseSessionProtocol
 
-class MCPClientSession(SessionProtocol):
+class MCPClientSession(BaseSessionProtocol):
     """ClientSession class"""
 
     incoming_messages: Queue[types.JSONRPCMessage]

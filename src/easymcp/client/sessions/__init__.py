@@ -1,1 +1,1 @@
-from easymcp.client.sessions.GenericSession import SessionProtocol
+from easymcp.client.sessions.GenericSession import BaseSessionProtocol
