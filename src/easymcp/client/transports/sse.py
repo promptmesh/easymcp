@@ -1,4 +1,3 @@
-import httpx
 from pydantic import BaseModel
 from easymcp.client.transports.generic import TransportProtocol
 from mcp.client.sse import sse_client

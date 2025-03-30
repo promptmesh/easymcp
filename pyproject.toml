@@ -8,6 +8,7 @@ authors = [
 ]
 requires-python = ">=3.13"
 dependencies = [
+    "aiodocker>=0.24.0",
     "httpx>=0.28.1",
     "loguru>=0.7.3",
     "mcp>=1.5.0",
