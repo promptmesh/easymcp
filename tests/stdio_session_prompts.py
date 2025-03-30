@@ -1,5 +1,5 @@
 import asyncio
-from easymcp.client.ClientSession import ClientSession
+from easymcp.client.sessions.mcp import MCPClientSession
 from easymcp.client.transports.stdio import StdioTransport, StdioServerParameters
 
 
@@ -7,7 +7,7 @@ async def main():
     args = StdioServerParameters(command="uvx", args=["mcp-wolfram-alpha"], env={"WOLFRAM_API_KEY": "DEMO"})
     transport = StdioTransport(args)
 
-    client_session = ClientSession(transport)
+    client_session = MCPClientSession(transport)
     await client_session.init()
 
     result = await client_session.start()

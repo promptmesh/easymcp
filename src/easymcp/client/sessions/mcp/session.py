@@ -7,13 +7,14 @@ from loguru import logger
 
 from easymcp.client.iobuffers import reader, writer
 from easymcp.client.requestmap import RequestMap
-from easymcp.client.transports.generic import GenericTransport
+from easymcp.client.transports.generic import TransportProtocol
 
 from easymcp.client.utils import CreateJsonRPCRequest
-from easymcp.vendored import types
+from mcp import types
 
+from easymcp.client.sessions.GenericSession import BaseSessionProtocol
 
-class ClientSession:
+class MCPClientSession(BaseSessionProtocol):
     """ClientSession class"""
 
     incoming_messages: Queue[types.JSONRPCMessage]
@@ -35,7 +36,7 @@ class ClientSession:
     _prompts: types.ListPromptsResult | None = None
     _resources: types.ListResourcesResult | None = None
 
-    def __init__(self, transport: GenericTransport):
+    def __init__(self, transport: TransportProtocol):
         self.transport = transport
 
         # define message queues

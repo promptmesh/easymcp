@@ -2,11 +2,11 @@ from asyncio import Queue, Task
 
 from loguru import logger
 import pydantic
-from easymcp.client.transports.generic import GenericTransport
-from easymcp.vendored import types
+from easymcp.client.transports.generic import TransportProtocol
+from mcp import types
 
 
-async def reader(transport: GenericTransport, queue: Queue[types.JSONRPCMessage]):
+async def reader(transport: TransportProtocol, queue: Queue[types.JSONRPCMessage]):
     """Read data from the transport and put it in the queue"""
 
     async def _reader():
@@ -28,7 +28,7 @@ async def reader(transport: GenericTransport, queue: Queue[types.JSONRPCMessage]
     return task
 
 
-async def writer(transport: GenericTransport, queue: Queue[types.JSONRPCMessage]):
+async def writer(transport: TransportProtocol, queue: Queue[types.JSONRPCMessage]):
     """Write data from the queue to the transport"""
 
     async def _writer():

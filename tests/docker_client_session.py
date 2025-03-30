@@ -1,11 +1,11 @@
 import asyncio
 from easymcp.client.sessions.mcp import MCPClientSession
-from easymcp.client.transports.stdio import StdioTransport, StdioServerParameters
+from easymcp.client.transports.docker import DockerTransport, DockerServerParameters
 
 
 async def main():
-    args = StdioServerParameters(command="uvx", args=["mcp-timeserver"])
-    transport = StdioTransport(args)
+    args = DockerServerParameters(image="mcp/time")
+    transport = DockerTransport(args)
 
     client_session = MCPClientSession(transport)
     await client_session.init()
@@ -21,14 +21,8 @@ async def main():
     tools = await client_session.list_tools()
     print(f"{tools=}")
 
-    call = await client_session.call_tool("get-current-time", {})
-    print(f"{call=}")
-
-    resource = await client_session.read_resource("datetime://Asia/Chongqing/now")
-    print(f"{resource=}")
-
-    # await client_session.stop()
-    await asyncio.Future()
+    await client_session.stop()
+    print("stopped")
 
 
 asyncio.run(main())

@@ -1,6 +1,6 @@
 from asyncio import Future, Queue
 
-import easymcp.vendored.types as types
+from mcp import types
 
 from loguru import logger
 

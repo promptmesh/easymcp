@@ -6,7 +6,7 @@ import asyncio
 import meilisearch.client 
 from easymcp.client.ClientManager import ClientManager
 from easymcp.client.transports.stdio import StdioServerParameters
-from easymcp.vendored.types import TextResourceContents
+from mcp.types import TextResourceContents
 from itertools import count
 
 # disable logging
