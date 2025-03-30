@@ -22,7 +22,7 @@ class SseTransport(TransportProtocol):
     args: SseServerParameters
     connection = None
 
-    readsream = None
+    readstream = None
     writestream = None
 
     def __init__(self, arguments: SseServerParameters):
@@ -38,7 +38,7 @@ class SseTransport(TransportProtocol):
         """Start the transport"""
         self.state = "started"
 
-        self.readsream, self.writestream = await self.client.__aenter__()
+        self.readstream, self.writestream = await self.client.__aenter__()
 
 
     async def send(self, message: str):
@@ -50,9 +50,9 @@ class SseTransport(TransportProtocol):
 
     async def receive(self) -> str:
         """Receive data from the transport"""
-        assert self.readsream, "Transport not started"
+        assert self.readstream, "Transport not started"
 
-        msg = await self.readsream.receive()
+        msg = await self.readstream.receive()
         
         if isinstance(msg, Exception):
             await self.stop()
