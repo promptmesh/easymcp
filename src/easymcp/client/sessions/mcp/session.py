@@ -194,7 +194,7 @@ class MCPClientSession(BaseSessionProtocol):
         """list available tools"""
 
         if not force and self._tools is not None:
-            return self._tools
+            return self._tools.model_copy(deep=True)
 
         request = types.ClientRequest(
             types.ListToolsRequest(
@@ -209,7 +209,7 @@ class MCPClientSession(BaseSessionProtocol):
         else:
             result = types.ListToolsResult.model_validate(response.result)
 
-        self._tools = result
+        self._tools = result.model_copy(deep=True)
 
         return result
 
@@ -238,7 +238,7 @@ class MCPClientSession(BaseSessionProtocol):
         """list available resources"""
 
         if not force and self._resources is not None:
-            return self._resources
+            return self._resources.model_copy(deep=True)
 
         request = types.ClientRequest(
             types.ListResourcesRequest(
@@ -253,7 +253,7 @@ class MCPClientSession(BaseSessionProtocol):
         else:
             result = types.ListResourcesResult.model_validate(response.result)
 
-        self._resources = result
+        self._resources = result.model_copy(deep=True)
 
         return result
 
@@ -283,7 +283,7 @@ class MCPClientSession(BaseSessionProtocol):
         """list available prompts"""
 
         if not force and self._prompts is not None:
-            return self._prompts
+            return self._prompts.model_copy(deep=True)
 
         request = types.ClientRequest(
             types.ListPromptsRequest(
@@ -298,7 +298,7 @@ class MCPClientSession(BaseSessionProtocol):
         else:
             result = types.ListPromptsResult.model_validate(response.result)
 
-        self._prompts = result
+        self._prompts = result.model_copy(deep=True)
 
         return result
     
