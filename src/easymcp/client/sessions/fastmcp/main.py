@@ -1,4 +1,6 @@
 import importlib
+import os
+import sys
 from mcp import ListPromptsResult, ListResourcesResult, ListToolsResult, types
 from mcp.server.fastmcp import FastMCP
 
@@ -18,13 +20,28 @@ class FastMCPSession(BaseSessionProtocol, ToolsCompatible, ResourcesCompatible, 
         """Initialize the session"""
         moduleName, identifier = self.params.module.rsplit(":", 1)
 
-        module = importlib.import_module(moduleName)
-        cls = getattr(module, identifier)
+        originalEnv = os.environ
+        originalArgv = sys.argv.copy()
 
-        if self.params.factory:
-            self.session = cls()
-        else:
-            self.session = cls
+        mcpEnv = os.environ.copy()
+        mcpEnv.update(self.params.env)
+        mcpArgv = ["uvx",]
+        mcpArgv.extend(self.params.argv)
+
+        os.environ = mcpEnv
+        sys.argv = mcpArgv
+
+        try: 
+            module = importlib.import_module(moduleName)
+            cls = getattr(module, identifier)
+            if self.params.factory:
+
+                self.session = cls()
+            else:
+                self.session = cls
+        finally:
+            os.environ = originalEnv
+            sys.argv = originalArgv
 
         assert isinstance(self.session, FastMCP), "Session must be a FastMCP instance"
 
