@@ -1,3 +1,4 @@
+import asyncio
 from typing import Any, Literal
 
 import anyio
@@ -118,6 +119,7 @@ class DockerTransport(TransportProtocol):
         self._task_group.start_soon(write_stdin)
 
         self.state = "started"
+        await asyncio.sleep(1)
 
     async def stop(self) -> None:
         logger.debug("Stopping DockerTransport...")

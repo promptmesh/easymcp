@@ -6,7 +6,6 @@ from easymcp.client.sessions.mcp import MCPClientSession
 from easymcp.client.transports.docker import DockerServerParameters, DockerTransport
 
 
-@pytest.mark.skip(reason="this test hangs")
 @pytest.mark.asyncio
 async def test_docker_transport():
     try:
