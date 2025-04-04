@@ -1,15 +1,16 @@
-import asyncio
+import shutil
+import pytest
 from easymcp.client.transports.stdio import StdioTransport, StdioServerParameters
 
+command = shutil.which("echo")
 
-async def main():
+@pytest.mark.skipif(command is None, reason="echo command not found")
+@pytest.mark.asyncio
+async def test_basic_stdio_transport():
     args = StdioServerParameters(command="echo", args=["Hello, world!"])
     transport = StdioTransport(args)
     await transport.init()
     await transport.start()
-    print(f"{await transport.receive()=}")
+    msg = await transport.receive()
+    assert "Hello" in msg
     await transport.stop()
-
-
-if __name__ == "__main__":
-    asyncio.run(main())
