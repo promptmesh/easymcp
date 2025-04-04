@@ -1,4 +1,4 @@
-from asyncio import Queue, Task
+from asyncio import Queue, create_task
 
 from loguru import logger
 import pydantic
@@ -24,7 +24,7 @@ async def reader(transport: TransportProtocol, queue: Queue[types.JSONRPCMessage
 
             queue.put_nowait(parsed)
 
-    task = Task(_reader())
+    task = create_task(_reader())
     return task
 
 
@@ -36,5 +36,5 @@ async def writer(transport: TransportProtocol, queue: Queue[types.JSONRPCMessage
             data = await queue.get()
             await transport.send(data.model_dump_json())
 
-    task = Task(_writer())
+    task = create_task(_writer())
     return task

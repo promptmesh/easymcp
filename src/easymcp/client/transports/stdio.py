@@ -58,6 +58,7 @@ class StdioTransport(TransportProtocol):
     arguments: StdioServerParameters
     subprocess: asyncio.subprocess.Process | None
     read_buffer: ReadBuffer
+    stderr_task: asyncio.Task | None
 
     def __init__(self, arguments: StdioServerParameters):
         self.state = "constructed"
@@ -125,6 +126,8 @@ class StdioTransport(TransportProtocol):
             print(line.decode(), file=sys.stderr, end="")
 
     async def stop(self) -> None:
+        if self.stderr_task:
+            self.stderr_task.cancel()
         try:
             if self.subprocess:
                 self.subprocess.terminate()
