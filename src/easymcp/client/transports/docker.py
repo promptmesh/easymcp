@@ -1,4 +1,4 @@
-from typing import Literal
+from typing import Any, Literal
 
 import anyio
 import anyio.abc
@@ -6,6 +6,8 @@ from aiodocker import Docker, containers
 from anyio.streams.memory import MemoryObjectReceiveStream, MemoryObjectSendStream
 from loguru import logger
 from pydantic import BaseModel, Field
+
+from easymcp.client.transports.generic import TransportProtocol
 
 
 class DockerServerParameters(BaseModel):
@@ -22,14 +24,14 @@ class DockerServerParameters(BaseModel):
     )
 
 
-class DockerTransport:
+class DockerTransport(TransportProtocol):
     state: Literal["constructed", "initialized", "started", "stopped"] = "constructed"
 
     def __init__(self, config: DockerServerParameters) -> None:
         self.config = config
         self.docker: Docker | None = None
         self.container: containers.DockerContainer | None = None
-        self.attach_result: any = None
+        self.attach_result: Any = None
 
         self._reader_send: MemoryObjectSendStream[str]
         self._reader_recv: MemoryObjectReceiveStream[str]

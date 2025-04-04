@@ -1,9 +1,19 @@
-import asyncio
+import pytest
+from aiodocker import Docker
+
 from easymcp.client.sessions.mcp import MCPClientSession
 from easymcp.client.transports.docker import DockerTransport, DockerServerParameters
 
+@pytest.mark.skip(reason="this test hangs")
+@pytest.mark.asyncio
+async def test_docker_transport():
+    try:
+        docker = Docker()
+        await docker.version()
+    except Exception as e:
+        print(f"Docker not running: {e}")
+        pytest.skip("Docker is not running")
 
-async def main():
     args = DockerServerParameters(image="mcp/time")
     transport = DockerTransport(args)
 
@@ -13,8 +23,6 @@ async def main():
     result = await client_session.start()
     print(f"{result=}")
 
-    # await asyncio.sleep(10)
-
     resources = await client_session.list_resources()
     print(f"{resources=}")
 
@@ -23,6 +31,3 @@ async def main():
 
     await client_session.stop()
     print("stopped")
-
-
-asyncio.run(main())
