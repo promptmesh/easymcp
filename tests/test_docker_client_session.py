@@ -1,8 +1,10 @@
 import pytest
 from aiodocker import Docker
+from mcp.types import InitializeResult, ListResourcesResult, ListToolsResult
 
 from easymcp.client.sessions.mcp import MCPClientSession
-from easymcp.client.transports.docker import DockerTransport, DockerServerParameters
+from easymcp.client.transports.docker import DockerServerParameters, DockerTransport
+
 
 @pytest.mark.skip(reason="this test hangs")
 @pytest.mark.asyncio
@@ -21,13 +23,13 @@ async def test_docker_transport():
     await client_session.init()
 
     result = await client_session.start()
-    print(f"{result=}")
+    assert isinstance(result, InitializeResult)
 
     resources = await client_session.list_resources()
-    print(f"{resources=}")
+    assert isinstance(resources, ListResourcesResult)
 
     tools = await client_session.list_tools()
-    print(f"{tools=}")
+    assert isinstance(tools, ListToolsResult)
 
     await client_session.stop()
     print("stopped")
