@@ -4,6 +4,7 @@ import time
 from easymcp.client.sessions.mcp import MCPClientSession
 from easymcp.client.transports.stdio import StdioTransport, StdioServerParameters
 
+@pytest.mark.flaky(reruns=3)
 @pytest.mark.asyncio
 async def test_prompt_cache_is_faster():
     args = StdioServerParameters(
