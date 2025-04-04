@@ -1,4 +1,5 @@
 from asyncio import Queue, Task, create_task
+import asyncio
 from inspect import iscoroutinefunction
 import json
 from typing import Awaitable, Callable
@@ -192,8 +193,24 @@ class MCPClientSession(BaseSessionProtocol):
         """stop the client session"""
         self.reader_task.cancel()
         self.writer_task.cancel()
+        try:
+            await self.reader_task
+        except asyncio.CancelledError:
+            pass
+
+        try:
+            self.writer_task
+        except asyncio.CancelledError:
+            pass
+
         self._start_reading_messages_task.cancel()
+        try:
+            await self._start_reading_messages_task
+        except asyncio.CancelledError:
+            pass
+
         await self.transport.stop()
+        await asyncio.sleep(0)
 
     async def list_tools(self, force: bool = False):
         """list available tools"""

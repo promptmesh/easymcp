@@ -3,6 +3,7 @@ import io
 import os
 import shutil
 import sys
+import gc
 from typing import Literal
 
 from loguru import logger
@@ -128,18 +129,50 @@ class StdioTransport(TransportProtocol):
     async def stop(self) -> None:
         if self.stderr_task:
             self.stderr_task.cancel()
-        try:
-            if self.subprocess:
-                self.subprocess.terminate()
+            try:
+                await self.stderr_task
+            except asyncio.CancelledError:
+                pass
+            self.stderr_task = None
+
+        if self.subprocess:
+            if self.subprocess.returncode is None:
                 try:
+                    self.subprocess.terminate()
                     await asyncio.wait_for(self.subprocess.wait(), timeout=5)
                 except asyncio.TimeoutError:
                     self.subprocess.kill()
                     await self.subprocess.wait()
 
-            logger.info("Transport stopped successfully.")
-        except Exception as e:
-            logger.error(f"Error stopping transport: {e}")
-        finally:
+            if self.subprocess.stdin and not self.subprocess.stdin.is_closing():
+                logger.debug("Closing stdin")
+                self.subprocess.stdin.close()
+                await self.subprocess.stdin.wait_closed()
+            self.subprocess.stdin = None
+
+            if self.subprocess.stdout:
+                logger.debug("Closing stdout")
+                self.subprocess.stdout.feed_eof()
+                try:
+                    await self.subprocess.stdout.read()
+                except Exception:
+                    pass
+                self.subprocess.stdout = None
+
+            if self.subprocess.stderr:
+                logger.debug("Closing stderr")
+                self.subprocess.stderr.feed_eof()
+                try:
+                    await self.subprocess.stderr.read()
+                except Exception:
+                    pass
+                self.subprocess.stderr = None
+
+            await asyncio.sleep(0.1)
+            gc.collect()
+
             self.subprocess = None
-            self.state = "stopped"
+
+
+        self.state = "stopped"
+        logger.info("Transport stopped successfully.")

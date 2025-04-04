@@ -1,3 +1,4 @@
+import asyncio
 import pytest
 from easymcp.client.sessions.mcp import MCPClientSession
 from easymcp.client.transports.stdio import StdioTransport, StdioServerParameters
@@ -28,3 +29,4 @@ async def test_stdio_client_session():
     print(f"{resource=}")
 
     await client_session.stop()
+    await asyncio.sleep(0)
