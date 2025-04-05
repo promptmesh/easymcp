@@ -1,4 +1,5 @@
-from asyncio import Queue, Task
+from asyncio import Queue, Task, create_task
+import asyncio
 from inspect import iscoroutinefunction
 import json
 from typing import Awaitable, Callable
@@ -22,6 +23,8 @@ class MCPClientSession(BaseSessionProtocol):
 
     reader_task: Task[None]
     writer_task: Task[None]
+
+    _start_reading_messages_task: Task[None]
 
     request_map: RequestMap
 
@@ -136,7 +139,7 @@ class MCPClientSession(BaseSessionProtocol):
                 else:
                     logger.error(f"Unknown message type: {message.root}")
 
-        Task(__start_reading_messages())
+        self._start_reading_messages_task = create_task(__start_reading_messages())
 
     async def start(self) -> types.InitializeResult:
         """start the client session"""
@@ -188,7 +191,26 @@ class MCPClientSession(BaseSessionProtocol):
 
     async def stop(self):
         """stop the client session"""
+        self.reader_task.cancel()
+        self.writer_task.cancel()
+        try:
+            await self.reader_task
+        except asyncio.CancelledError:
+            pass
+
+        try:
+            self.writer_task
+        except asyncio.CancelledError:
+            pass
+
+        self._start_reading_messages_task.cancel()
+        try:
+            await self._start_reading_messages_task
+        except asyncio.CancelledError:
+            pass
+
         await self.transport.stop()
+        await asyncio.sleep(0)
 
     async def list_tools(self, force: bool = False):
         """list available tools"""

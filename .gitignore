@@ -11,3 +11,6 @@ wheels/
 
 # repomix
 repomix-output.xml
+
+# pytest
+.coverage
