@@ -1,5 +1,5 @@
 from easymcp.client.sessions.fastmcp.main import FastMCPSession
-from easymcp.client.sessions.fastmcp.paramaters import FastMcpParameters
+from easymcp.client.sessions.fastmcp.parameters import FastMcpParameters
 
 
 

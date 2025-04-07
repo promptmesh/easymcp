@@ -3,7 +3,7 @@ from mcp.types import CallToolResult
 import pytest
 
 from easymcp.client.sessions.fastmcp.main import FastMCPSession
-from easymcp.client.sessions.fastmcp.paramaters import FastMcpParameters
+from easymcp.client.sessions.fastmcp.parameters import FastMcpParameters
 
 # test valid module
 @pytest.mark.asyncio

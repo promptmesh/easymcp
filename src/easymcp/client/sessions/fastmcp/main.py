@@ -10,7 +10,7 @@ from easymcp.client.sessions.GenericSession import (
     ResourcesCompatible,
     ToolsCompatible,
 )
-from easymcp.client.sessions.fastmcp.paramaters import FastMcpParameters
+from easymcp.client.sessions.fastmcp.parameters import FastMcpParameters
 
 
 class FastMCPSession(

@@ -1,7 +1,7 @@
 import pytest
 from mcp.types import CallToolResult, ReadResourceResult
 from easymcp.client.ClientManager import ClientManager
-from easymcp.client.sessions.fastmcp.paramaters import FastMcpParameters
+from easymcp.client.sessions.fastmcp.parameters import FastMcpParameters
 from easymcp.client.transports.stdio import StdioServerParameters
 
 @pytest.mark.asyncio

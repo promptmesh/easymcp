@@ -2,7 +2,7 @@ from typing import TypeAlias
 
 from easymcp.client.sessions.GenericSession import BaseSessionProtocol
 from easymcp.client.sessions.fastmcp.main import FastMCPSession
-from easymcp.client.sessions.fastmcp.paramaters import FastMcpParameters
+from easymcp.client.sessions.fastmcp.parameters import FastMcpParameters
 from easymcp.client.sessions.mcp import MCPClientSession
 from easymcp.client.transports.stdio import StdioTransport, StdioServerParameters
 from easymcp.client.transports.docker import DockerTransport, DockerServerParameters
