@@ -1,4 +1,5 @@
-from mcp import ListResourcesResult, ListToolsResult
+from mcp import ListResourcesResult, ListToolsResult, ReadResourceResult
+from mcp.types import CallToolResult
 import pytest
 
 from easymcp.client.sessions.fastmcp.main import FastMCPSession
@@ -20,6 +21,11 @@ async def test_fastmcp_session():
         assert tool.name is not None
         assert tool.inputSchema is not None
 
+    tool_call = await session.call_tool(tool_name="get_random_bool", args={})
+    assert isinstance(tool_call, CallToolResult)
+    assert isinstance(tool_call.content, list)
+    assert len(tool_call.content) > 0
+    assert tool_call.isError is False
 
     # resources
     resources = await session.list_resources()
@@ -27,6 +33,11 @@ async def test_fastmcp_session():
     assert len(resources.resources) > 0
     for resource in resources.resources:
         assert resource.name is not None
+
+    resolved_resource = await session.read_resource(resource_name="demo://random-number")
+    assert isinstance(resolved_resource, ReadResourceResult)
+    assert isinstance(resolved_resource.contents, list)
+    assert len(resolved_resource.contents) > 0
 
 
 # test missing fastmcp class
