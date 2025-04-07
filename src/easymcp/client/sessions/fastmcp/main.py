@@ -1,3 +1,4 @@
+from ast import Module
 import importlib
 import os
 import sys
@@ -31,14 +32,25 @@ class FastMCPSession(BaseSessionProtocol, ToolsCompatible, ResourcesCompatible, 
         os.environ = mcpEnv
         sys.argv = mcpArgv
 
-        try: 
+        try:
             module = importlib.import_module(moduleName)
+            
             cls = getattr(module, identifier)
             if self.params.factory:
 
                 self.session = cls()
             else:
                 self.session = cls
+
+        except ModuleNotFoundError as e:
+            raise ImportError(f"Module {moduleName} not found") from e
+        
+        except AttributeError as e:
+            raise ImportError(f"Module {moduleName} does not contain {identifier}") from e
+        
+        except ImportError as e:
+            raise ImportError(f"Error importing {moduleName}") from e
+            
         finally:
             os.environ = originalEnv
             sys.argv = originalArgv
