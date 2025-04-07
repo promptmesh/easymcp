@@ -10,7 +10,7 @@ from easymcp.client.sessions.GenericSession import (
     ResourcesCompatible,
     ToolsCompatible,
 )
-from easymcp.client.sessions.fastmcp.paramaters import FastMCPParamaters
+from easymcp.client.sessions.fastmcp.paramaters import FastMcpParameters
 
 
 class FastMCPSession(
@@ -18,10 +18,10 @@ class FastMCPSession(
 ):
     """ASGI style fastmcp session"""
 
-    params: FastMCPParamaters
+    params: FastMcpParameters
     session: FastMCP
 
-    def __init__(self, params: FastMCPParamaters):
+    def __init__(self, params: FastMcpParameters):
         self.params = params
 
     async def init(self) -> None:

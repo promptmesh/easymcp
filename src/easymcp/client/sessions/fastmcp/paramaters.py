@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 
-class FastMCPParamaters(BaseModel):
+class FastMcpParameters(BaseModel):
     module: str
     factory: bool = False
     env: dict = {}

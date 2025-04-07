@@ -1,9 +1,9 @@
 from easymcp.client.sessions.fastmcp.main import FastMCPSession
-from easymcp.client.sessions.fastmcp.paramaters import FastMCPParamaters
+from easymcp.client.sessions.fastmcp.paramaters import FastMcpParameters
 
 
 
-config = FastMCPParamaters(module="fastmcp_test:mcp")
+config = FastMcpParameters(module="fastmcp_test:mcp")
 
 async def main():
     session = FastMCPSession(config)
